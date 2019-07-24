@@ -18,14 +18,15 @@ class FrameData(object):
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
 
+# /// vector of events included in this frame
     # FrameData
     def Events(self, j):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
         if o != 0:
             x = self._tab.Vector(o)
-            x += flatbuffers.number_types.UOffsetTFlags.py_type(j) * 6
-            from .Event import Event
-            obj = Event()
+            x += flatbuffers.number_types.UOffsetTFlags.py_type(j) * 16
+            from .ChangeEvent import ChangeEvent
+            obj = ChangeEvent()
             obj.Init(self._tab.Bytes, x)
             return obj
         return None
@@ -53,7 +54,7 @@ class FrameData(object):
 
 def FrameDataStart(builder): builder.StartObject(3)
 def FrameDataAddEvents(builder, events): builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(events), 0)
-def FrameDataStartEventsVector(builder, numElems): return builder.StartVector(6, numElems, 2)
+def FrameDataStartEventsVector(builder, numElems): return builder.StartVector(16, numElems, 8)
 def FrameDataAddRisingCount(builder, risingCount): builder.PrependUint32Slot(1, risingCount, 0)
 def FrameDataAddFallingCount(builder, fallingCount): builder.PrependUint32Slot(2, fallingCount, 0)
 def FrameDataEnd(builder): return builder.EndObject()

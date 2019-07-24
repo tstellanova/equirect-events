@@ -10,9 +10,8 @@ import random
 import py360convert
 import csv
 
-import EventCam.Event
+import EventCam.ChangeEvent
 import EventCam.FrameData
-import EventCam.Polarity
 
 
 # TODO make these command line parameters
@@ -84,19 +83,28 @@ def generate_flatbuffer_events(rising_locations, falling_locations, event_file):
   total_events = rising_count + falling_count
   EventCam.FrameData.FrameDataStartEventsVector(fbb, total_events)
 
-  real_falling_count = 0
-  for item in falling_locations:
-    x =  item[0][0]
-    y =  item[0][1]
-    EventCam.Event.CreateEvent(fbb, x, y, EventCam.Polarity.Polarity.Falling)
-    real_falling_count += 1
+  max_idx = max(len(falling_locations), len(rising_locations))
+  timestamp = 0.0
 
+  real_falling_count = 0
   real_rising_count = 0
-  for item in rising_locations:
-    x =  item[0][0]
-    y =  item[0][1]
-    EventCam.Event.CreateEvent(fbb, x, y, EventCam.Polarity.Polarity.Rising)
-    real_rising_count += 1
+  for idx in range(0, max_idx):
+    if idx < len(falling_locations):
+      item = falling_locations[idx]
+      x =  item[0][0]
+      y =  item[0][1]
+      EventCam.ChangeEvent.CreateChangeEvent(fbb, timestamp, x, y, 0)
+      real_falling_count += 1
+      timestamp += 1E-9 # assumes events must be at least 1 nanosecond apart
+
+    if idx < len(rising_locations):
+      item = rising_locations[idx]
+      x =  item[0][0]
+      y =  item[0][1]
+      EventCam.ChangeEvent.CreateChangeEvent(fbb, timestamp, x, y, 1)
+      real_rising_count += 1
+      timestamp += 1E-9 # assumes events must be at least 1 nanosecond apart
+
 
   if real_rising_count != rising_count:
     print("rising got: %d expected: %d" %(real_rising_count, rising_count ) )
